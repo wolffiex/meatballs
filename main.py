@@ -2,7 +2,21 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 import pytz
+import psycopg2
+from psycopg2 import sql
 from decimal import Decimal
+
+
+# Establish a connection to the database
+conn = psycopg2.connect(**{
+    "dbname": "monitoring",
+    "user": "adam",
+    "password": "adam",
+    "host": "haus.local",
+})
+cur = conn.cursor()
+
+
 url = "http://10.1.1.150/livedata.htm"
 
 # Send an HTTP GET request to the URL
@@ -39,14 +53,31 @@ for row in soup.find_all("tr"):
         item_name = item_name_element.text.strip()
         for sub_str, field_name in SCRAPED_FIELDS.items():
             if sub_str in item_name:
-                item_value = value_element["value"].strip()  # Extract the value attribute
+                item_value = value_element[
+                    "value"
+                ].strip()  # Extract the value attribute
                 data[field_name] = item_value
                 continue
 time_format = "%H:%M %m/%d/%Y"
-naive_dt = datetime.strptime(data.pop('time'), time_format)
-eastern = pytz.timezone('US/Eastern')
+naive_dt = datetime.strptime(data.pop("time"), time_format)
+eastern = pytz.timezone("US/Eastern")
 aware_dt = eastern.localize(naive_dt)
-print(f"time: {aware_dt}")
-# Output the data
-for name, value in data.items():
-    print(f"{name}: {Decimal(value)}")
+data["time"] = aware_dt
+column_names = data.keys()
+column_values = data.values()
+query = sql.SQL("INSERT INTO weather ({}) VALUES ({})").format(
+    sql.SQL(",").join(map(sql.Identifier, column_names)),
+    sql.SQL(",").join(sql.Placeholder() * len(column_values))
+)
+
+try:
+    # Execute the INSERT statement
+    cur.execute(query, list(column_values))
+    conn.commit()
+except psycopg2.Error as e:
+    print(f"An error occurred: {e}")
+    conn.rollback()
+finally:
+    # Close the cursor and the connection
+    cur.close()
+    conn.close()
