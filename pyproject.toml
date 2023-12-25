@@ -3,7 +3,6 @@ name = "meatballs"
 version = "0.1.0"
 description = ""
 authors = ["wolffiex <adam@sparko.local>"]
-readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
