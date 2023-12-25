@@ -1,6 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
-
+from datetime import datetime
+import pytz
+from decimal import Decimal
 url = "http://10.1.1.150/livedata.htm"
 
 # Send an HTTP GET request to the URL
@@ -39,7 +41,12 @@ for row in soup.find_all("tr"):
             if sub_str in item_name:
                 item_value = value_element["value"].strip()  # Extract the value attribute
                 data[field_name] = item_value
-
+                continue
+time_format = "%H:%M %m/%d/%Y"
+naive_dt = datetime.strptime(data.pop('time'), time_format)
+eastern = pytz.timezone('US/Eastern')
+aware_dt = eastern.localize(naive_dt)
+print(f"time: {aware_dt}")
 # Output the data
 for name, value in data.items():
-    print(f"{name}: {value}")
+    print(f"{name}: {Decimal(value)}")
