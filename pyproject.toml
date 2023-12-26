@@ -10,6 +10,7 @@ beautifulsoup4 = "^4.12.2"
 requests = "^2.31.0"
 pytz = "^2023.3.post1"
 psycopg2 = "^2.9.9"
+ipython = "^8.19.0"
 
 
 [build-system]
