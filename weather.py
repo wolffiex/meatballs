@@ -65,17 +65,15 @@ aware_dt = eastern.localize(naive_dt)
 data["time"] = aware_dt
 column_names = data.keys()
 column_values = data.values()
-query = sql.SQL("INSERT INTO weather ({}) VALUES ({})").format(
+weather_insert = sql.SQL("INSERT INTO weather ({}) VALUES ({})").format(
     sql.SQL(",").join(map(sql.Identifier, column_names)),
     sql.SQL(",").join(sql.Placeholder() * len(column_values))
 )
 
 try:
-    # Execute the INSERT statement
-    cur.execute(query, list(column_values))
+    cur.execute(weather_insert, list(column_values))
     conn.commit()
 except psycopg2.Error as e:
-    print(f"An error occurred: {e}")
     conn.rollback()
 finally:
     # Close the cursor and the connection
