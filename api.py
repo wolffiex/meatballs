@@ -9,7 +9,7 @@ PRESSURE_SELECT = """SELECT
     FROM weather
     GROUP BY bucket_epoch 
     ORDER BY bucket_epoch
-    LIMIT 500;
+    LIMIT 50;
 """
 
 
@@ -19,14 +19,19 @@ class TaskMan:
         self.task_queue = asyncio.Queue()
         self.output_queue = asyncio.Queue()
         self.background_task = asyncio.create_task(self._run_background_task())
-    
+
     async def add_task(self, name, gen):
         """Add a new task to the manager."""
         await self.task_queue.put(self._taskify(name, gen))
 
     async def _taskify(self, name, gen):
+        counter = 0
         async for value in gen:
             await self.output_queue.put((name, value))
+            counter += 1
+            if counter > 100:
+                await asyncio.sleep(0)
+                counter = 0
         await self.output_queue.put((name, None))
 
     async def _run_background_task(self):
@@ -38,7 +43,7 @@ class TaskMan:
                 break
             task = asyncio.create_task(coro)
             self.tasks.append(task)
-    
+
     async def yield_results(self):
         """Call this method when you are done adding tasks."""
         # Inform the worker to stop listening for new tasks
@@ -51,7 +56,6 @@ class TaskMan:
 
         # Should not be necesary
         await self.background_task
-
 
 
 async def gen_pressure_chart(aconn):
@@ -94,10 +98,19 @@ async def main():
     }
     task_man = TaskMan()
     async with await psycopg.AsyncConnection.connect(**db_args) as aconn:
-        await task_man.add_task("barometer", gen_pressure_chart(aconn))
-        await task_man.add_task("summary", get_pressure_change(aconn))
+        await task_man.add_task("summary", get_summary(aconn))
+        # await task_man.add_task("barometer", gen_pressure_chart(aconn))
         async for item in task_man.yield_results():
             output(item)
+
+
+async def get_summary(aconn):
+    tasks = [
+        get_stormwatch(aconn),
+        get_current(aconn),
+    ]
+    for task in asyncio.as_completed([*tasks]):
+        yield await task
 
 
 THRESHOLDS = [
@@ -108,7 +121,42 @@ THRESHOLDS = [
 ]
 
 
-async def get_pressure_change(aconn):
+async def get_current(aconn):
+    columns = [
+        "time",
+        "outdoor_temp",
+        "humidity",
+        "uvi",
+        "rain_rate",
+    ]
+
+    def convert(key, val):
+        if key == "time":
+            return "last_entry", val.timestamp()
+        elif key == "outdoor_temp":
+            return key, float(val)
+        else:
+            return key, int(val)
+
+    placeholders = ", ".join(columns)
+    query = f"""
+        SELECT {placeholders}
+        FROM weather ORDER BY time DESC LIMIT 1;
+    """
+    async with aconn.cursor() as cur:
+        await cur.execute(query)
+        result = await cur.fetchone()
+    assert result
+    return {
+        key: value for key, value in map(lambda kv: convert(*kv), zip(columns, result))
+    }
+
+
+async def get_yesterday():
+    pass
+
+
+async def get_stormwatch(aconn):
     # SQL query using time bucketing and calculating averages
     query = """
         WITH PressureBuckets AS (
@@ -135,8 +183,7 @@ async def get_pressure_change(aconn):
     pressure_change = current - one_hour_ago
     for threshold, message in THRESHOLDS:
         if pressure_change <= threshold:
-            yield message
-            break
+            return {"stormwatch": message}
 
 
 asyncio.run(main())
