@@ -1,6 +1,6 @@
-import { greet } from './lib.js';
+import { ServerEventStream } from './lib.js';
+console.log('foo')
 
-greet("gus")
 const ctx = document.getElementById('myChart');
 
 new Chart(ctx, {
@@ -22,29 +22,16 @@ new Chart(ctx, {
   }
 });
 
-const sseUrl = "/api"
-const eventSource = new EventSource(sseUrl)
+console.log('jjj')
+const eventStream = new ServerEventStream("/api")
+console.log(eventStream)
+const terters = eventStream.init("barometer", "fooof")
+console.log(terters)
+drain(terters.barometer)
 
-eventSource.onmessage = function(event) {
-  try {
-    console.log('g', event.data)
-    const data = JSON.parse(event.data)
-    console.log("2event:", data)
-    if (data == "STOP") {
-      console.log('JJJ')
-      eventSource.close()
-      console.log('OJJ')
-    }
-  } catch(e) {
-    console.error(e)
+async function drain(q) {
+  console.log('drain', q)
+  for await (const value of q) {
+    console.log('inside', value)
   }
-};
-
-eventSource.onopen = function() {
-    console.log("Connection to server opened.")
-};
-
-eventSource.onerror = function(error) {
-    console.error("EventSource failed:", error)
-    eventSource.close()
-};
+}

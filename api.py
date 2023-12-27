@@ -19,21 +19,11 @@ async def gen_barometer_chart(q, aconn):
 
         async for record in cur:  # Iterate directly over the cursor
             bucket, pressure = record
-            await q.put(["barometer", int(bucket), float(pressure)])
+            await q.put(
+                ["barometer", {"time": int(bucket), "pressure": float(pressure)}]
+            )
 
         await q.put(["barometer", "STOP"])
-
-
-async def gen_pressure(q, id):
-    await q.put([id, "x", {"foo": "far"}])
-    await asyncio.sleep(1)
-    await q.put([id, "y", {"boo": "bar"}])
-    await asyncio.sleep(1)
-    await q.put([id, "z", {"boo": "bar"}])
-    await asyncio.sleep(1)
-    await q.put([id, "zz", {"boo": "bar"}])
-    await asyncio.sleep(1)
-    await q.put([id, "zzz", {"boo": "bar"}])
 
 
 def output(item):
@@ -55,7 +45,7 @@ async def main():
     async with await psycopg.AsyncConnection.connect(**db_args) as aconn:
         q = asyncio.Queue()
         # List of async methods to run in the background
-        producers = [gen_pressure(q, "a"), gen_barometer_chart(q, aconn)]
+        producers = [gen_barometer_chart(q, aconn)]
         background_task = asyncio.create_task(gather(q, producers))
         while True:
             item = await q.get()
