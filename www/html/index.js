@@ -26,11 +26,17 @@ const sseUrl = "/api"
 const eventSource = new EventSource(sseUrl)
 
 eventSource.onmessage = function(event) {
-  console.log("New event:", event.data)
-  if (event.data == "STOP") {
-    console.log('JJJ')
-    eventSource.close()
-    console.log('OJJ')
+  try {
+    console.log('g', event.data)
+    const data = JSON.parse(event.data)
+    console.log("2event:", data)
+    if (data == "STOP") {
+      console.log('JJJ')
+      eventSource.close()
+      console.log('OJJ')
+    }
+  } catch(e) {
+    console.error(e)
   }
 };
 
