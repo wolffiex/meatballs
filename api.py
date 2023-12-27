@@ -1,6 +1,6 @@
 import asyncio
 import json
-from time import sleep
+from typing import Any, Generator
 import psycopg
 
 PRESSURE_SELECT = """SELECT
@@ -11,6 +11,56 @@ PRESSURE_SELECT = """SELECT
     ORDER BY bucket_epoch
     LIMIT 500;
 """
+
+
+class TaskMan:
+    def __init__(self):
+        self.tasks = []
+        self.task_queue = asyncio.Queue()
+        self.output_queue = asyncio.Queue()
+        self.background_task = asyncio.create_task(self._run_background_task())
+    
+    async def add_task(self, name, gen):
+        """Add a new task to the manager."""
+        await self.task_queue.put(self._taskify(name, gen))
+
+    async def _taskify(self, name, gen):
+        async for value in gen:
+            await self.output_queue.put((name, value))
+        await self.output_queue.put((name, None))
+
+    async def _run_background_task(self):
+        while True:
+            coro = await self.task_queue.get()
+            if coro is None:  # Sentinel value to stop worker
+                await asyncio.gather(*self.tasks)
+                await self.output_queue.put(None)
+                break
+            task = asyncio.create_task(coro)
+            self.tasks.append(task)
+    
+    async def yield_results(self):
+        """Call this method when you are done adding tasks."""
+        # Inform the worker to stop listening for new tasks
+        await self.task_queue.put(None)
+        while True:
+            item = await self.output_queue.get()
+            yield item
+            if item is None:
+                break
+
+        # Should not be necesary
+        await self.background_task
+
+
+
+async def gen_pressure_chart(aconn):
+    async with aconn.cursor() as cur:
+        await cur.execute(PRESSURE_SELECT)
+
+        async for record in cur:
+            bucket, pressure = record
+            yield {"time": int(bucket), "pressure": float(pressure)}
 
 
 async def gen_barometer_chart(q, aconn):
@@ -42,21 +92,51 @@ async def main():
         "password": "adam",
         "host": "haus.local",
     }
+    task_man = TaskMan()
     async with await psycopg.AsyncConnection.connect(**db_args) as aconn:
-        q = asyncio.Queue()
-        # List of async methods to run in the background
-        producers = [gen_barometer_chart(q, aconn)]
-        background_task = asyncio.create_task(gather(q, producers))
-        while True:
-            item = await q.get()
+        await task_man.add_task("barometer", gen_pressure_chart(aconn))
+        await task_man.add_task("summary", get_pressure_change(aconn))
+        async for item in task_man.yield_results():
             output(item)
-            if item == "STOP":
-                break
-        await background_task
+
+
+THRESHOLDS = [
+    (-1.0, "Storm's abrewin'"),
+    (-0.5, "Weather incoming"),
+    (0.5, "Clouds clearing"),
+    (float("inf"), "Blue skies"),
+]
+
+
+async def get_pressure_change(aconn):
+    # SQL query using time bucketing and calculating averages
+    query = """
+        WITH PressureBuckets AS (
+            SELECT
+                time_bucket('10 minutes', time) as bucket,
+                AVG(pressure) as avg_pressure
+            FROM weather
+            WHERE time >= NOW() - INTERVAL '2 hours'
+            GROUP BY bucket
+            ORDER BY bucket DESC
+        )
+        SELECT
+            (SELECT avg_pressure FROM PressureBuckets LIMIT 1) AS current_pressure,
+            (SELECT avg_pressure FROM PressureBuckets OFFSET 6 LIMIT 1) AS one_hour_ago_pressure
+        FROM PressureBuckets
+        LIMIT 1;
+    """
+
+    async with aconn.cursor() as cur:
+        await cur.execute(query)
+        result = await cur.fetchone()
+    assert result
+    current, one_hour_ago = result
+    pressure_change = current - one_hour_ago
+    for threshold, message in THRESHOLDS:
+        if pressure_change <= threshold:
+            yield message
+            break
 
 
 asyncio.run(main())
-
-
-# def gen_events():
-#     yield from gen_barometer_chart(conn)
