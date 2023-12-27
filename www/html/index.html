@@ -71,6 +71,74 @@
     </header>
     <main>
       <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
+<!-- Recent client list-->
+<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+  <div class="mx-auto max-w-2xl lg:mx-0 lg:max-w-none">
+    <div class="flex items-center justify-between">
+      <h2 class="text-base font-semibold leading-7 text-gray-900">Recent clients</h2>
+      <a href="#" class="text-sm font-semibold leading-6 text-indigo-600 hover:text-indigo-500">View all<span class="sr-only">, clients</span></a>
+    </div>
+    <ul role="list" class="mt-6 grid grid-cols-1 gap-x-6 gap-y-8 lg:grid-cols-3 xl:gap-x-8">
+      <li class="overflow-hidden rounded-xl border border-gray-200">
+        <div class="flex items-center gap-x-4 border-b border-gray-900/5 bg-gray-50 p-6">
+          <img src="https://tailwindui.com/img/logos/48x48/tuple.svg" alt="Tuple" class="h-12 w-12 flex-none rounded-lg bg-white object-cover ring-1 ring-gray-900/10">
+          <div class="text-sm font-medium leading-6 text-gray-900">Tuple</div>
+        </div>
+        <dl class="-my-3 divide-y divide-gray-100 px-6 py-4 text-sm leading-6">
+          <div class="flex justify-between gap-x-4 py-3">
+            <dt class="text-gray-500">Last invoice</dt>
+            <dd class="text-gray-700"><time datetime="2022-12-13">December 13, 2022</time></dd>
+          </div>
+          <div class="flex justify-between gap-x-4 py-3">
+            <dt class="text-gray-500">Amount</dt>
+            <dd class="flex items-start gap-x-2">
+              <div class="font-medium text-gray-900">$2,000.00</div>
+              <div class="rounded-md py-1 px-2 text-xs font-medium ring-1 ring-inset text-red-700 bg-red-50 ring-red-600/10">Overdue</div>
+            </dd>
+          </div>
+        </dl>
+      </li>
+      <li class="overflow-hidden rounded-xl border border-gray-200">
+        <div class="flex items-center gap-x-4 border-b border-gray-900/5 bg-gray-50 p-6">
+          <img src="https://tailwindui.com/img/logos/48x48/savvycal.svg" alt="SavvyCal" class="h-12 w-12 flex-none rounded-lg bg-white object-cover ring-1 ring-gray-900/10">
+          <div class="text-sm font-medium leading-6 text-gray-900">SavvyCal</div>
+        </div>
+        <dl class="-my-3 divide-y divide-gray-100 px-6 py-4 text-sm leading-6">
+          <div class="flex justify-between gap-x-4 py-3">
+            <dt class="text-gray-500">Last invoice</dt>
+            <dd class="text-gray-700"><time datetime="2023-01-22">January 22, 2023</time></dd>
+          </div>
+          <div class="flex justify-between gap-x-4 py-3">
+            <dt class="text-gray-500">Amount</dt>
+            <dd class="flex items-start gap-x-2">
+              <div class="font-medium text-gray-900">$14,000.00</div>
+              <div class="rounded-md py-1 px-2 text-xs font-medium ring-1 ring-inset text-green-700 bg-green-50 ring-green-600/20">Paid</div>
+            </dd>
+          </div>
+        </dl>
+      </li>
+      <li class="overflow-hidden rounded-xl border border-gray-200">
+        <div class="flex items-center gap-x-4 border-b border-gray-900/5 bg-gray-50 p-6">
+          <img src="https://tailwindui.com/img/logos/48x48/reform.svg" alt="Reform" class="h-12 w-12 flex-none rounded-lg bg-white object-cover ring-1 ring-gray-900/10">
+          <div class="text-sm font-medium leading-6 text-gray-900">Reform</div>
+        </div>
+        <dl class="-my-3 divide-y divide-gray-100 px-6 py-4 text-sm leading-6">
+          <div class="flex justify-between gap-x-4 py-3">
+            <dt class="text-gray-500">Last invoice</dt>
+            <dd class="text-gray-700"><time datetime="2023-01-23">January 23, 2023</time></dd>
+          </div>
+          <div class="flex justify-between gap-x-4 py-3">
+            <dt class="text-gray-500">Amount</dt>
+            <dd class="flex items-start gap-x-2">
+              <div class="font-medium text-gray-900">$7,600.00</div>
+              <div class="rounded-md py-1 px-2 text-xs font-medium ring-1 ring-inset text-green-700 bg-green-50 ring-green-600/20">Paid</div>
+            </dd>
+          </div>
+        </dl>
+      </li>
+    </ul>
+  </div>
+</div>
 <div>
   <canvas id="myChart"></canvas>
 </div>
