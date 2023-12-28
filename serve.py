@@ -23,7 +23,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Connection", "keep-alive")
         self.end_headers()
 
-        with subprocess.Popen(['python', 'api.py'], stdout=PIPE, bufsize=1, text=True) as process:
+        with subprocess.Popen(['./api.sh'], stdout=PIPE, bufsize=1, text=True) as process:
             assert process.stdout
             for line in process.stdout:  # iterate over the output line by line
                 self.wfile.write(line.encode())  # assuming wfile expects bytes

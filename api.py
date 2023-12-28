@@ -3,16 +3,6 @@ import json
 from typing import Any, Generator
 import psycopg
 
-PRESSURE_SELECT = """SELECT
-    EXTRACT(EPOCH FROM time_bucket('10 minutes', time)) AS bucket_epoch,
-    first(pressure,time)
-    FROM weather
-    GROUP BY bucket_epoch 
-    ORDER BY bucket_epoch
-    LIMIT 50;
-"""
-
-
 class TaskMan:
     def __init__(self):
         self.tasks = []
@@ -59,8 +49,18 @@ class TaskMan:
 
 
 async def gen_pressure_chart(aconn):
+    query = """SELECT
+        EXTRACT(EPOCH FROM time_bucket('10 minutes', time)) AS bucket_epoch,
+        first(pressure,time)
+        FROM weather
+        GROUP BY bucket_epoch 
+        ORDER BY bucket_epoch DESC
+        LIMIT 50;
+        """
+
+
     async with aconn.cursor() as cur:
-        await cur.execute(PRESSURE_SELECT)
+        await cur.execute(query)
 
         async for record in cur:
             bucket, pressure = record

@@ -1,3 +1,54 @@
+const Collectors = {
+  "object": function() {
+    let result = {}
+    return {
+      add(obj) {
+        result = { ...result, ...obj }
+      },
+      getResult() {
+        return result;
+      }
+    };
+  },
+  "array": function() {
+    let result = [];
+    return {
+      add(item) {
+        result.push(item);
+      },
+      getResult() {
+        return result;
+      }
+    };
+  }
+}
+export function connect(...eventNames) {
+  const eventSource = new EventSource('/api');
+  // Handle a message with the event type 'stream_stop'
+  eventSource.addEventListener('stream_stop', (event) => {
+    eventSource.close();
+  });
+  return Object.fromEntries(
+    eventNames.map(eventName => [eventName, new Promise((resolve, reject) => {
+      let collector = null
+      eventSource.addEventListener(eventName, (event) => {
+        if (collector == null) {
+          console.log('waaa', event.data)
+          collector = Collectors[event.data]()
+        } else {
+          const data = JSON.parse(event.data)
+          if (data) {
+            collector.add(data)
+          } else {
+            resolve(collector.getResult())
+          }
+        }
+      });
+    })]))
+
+
+}
+
 class AsyncQueue {
   constructor() {
     this.setPending()

@@ -1,83 +1,80 @@
-import { ServerEventStream } from './lib.js';
+import { connect } from './lib.js';
 
-
-console.log('foo')
+const { summary, two_days } = connect("summary", "two_days")
+console.log('foo', summary)
+console.log('td', two_days)
+summary.then(ooo => console.log('summary', ooo))
+two_days.then(dd => {
+  const pressureData = dd.map(item => ({ x: item.time_bucket, y: item.pressure }))
+  const temperatureData = dd.map(item => ({ x: item.time_bucket, y: item.outdoor_temp }))
+  console.log(pressureData[0])
+  console.log(temperatureData[0])
+  new window.Chart(ctx, getTwoDayChart(pressureData, temperatureData))
+})
 
 const ctx = document.getElementById('myChart');
 
-// new Chart(ctx, {
-//   type: 'bar',
-//   data: {
-//     labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
-//     datasets: [{
-//       label: '# of Votes',
-//       data: [12, 19, 3, 5, 2, 3],
-//       borderWidth: 1
-//     }]
-//   },
-//   options: {
-//     scales: {
-//       y: {
-//         beginAtZero: true
-//       }
-//     }
-//   }
-// });
-
-const eventStream = new ServerEventStream("/api")
-console.log(eventStream)
-const terters = eventStream.init("barometer", "summary")
-console.log(terters)
-drain(terters.barometer)
-summ(terters.summary)
-
-async function summ(records) {
-  console.log('did', records)
-  let data = {}
-  for await (const record of records) {
-    data = {...data, ...record}
-  }
-  console.log('summary', data)
-}
-
-async function drain(q) {
-  console.log('drain', q)
-  const data = []
-  for await (const {time, pressure} of q) {
-    data.push({x: time * 1000, y: pressure})
-  }
-  console.log('infiit', data)
-  const myChart = new window.Chart(ctx, {
-      type: 'line',
-      data: {
-          datasets: [{
-              label: 'Pressure',
-              data,
-              fill: false,
-              borderColor: 'rgb(75, 192, 192)',
-              tension: 0.1
-          }]
-      },
-      options: {
-          scales: {
-              x: {
-                  type: 'time',
-                  time: {
-                      unit: 'minute'
-                  },
-                  title: {
-                      display: true,
-                      text: 'Time'
-                  }
-              },
-              y: {
-                  beginAtZero: false,
-                  title: {
-                      display: true,
-                      text: 'Pressure (hPa)'
-                  }
-              }
+function getTwoDayChart(pressureData, temperatureData) {
+  return {
+    type: 'line',
+    data: {
+      datasets: [
+        {
+          label: 'Pressure',
+          data: pressureData,
+          fill: false,
+          borderColor: 'rgb(75, 192, 192)',
+          tension: 0.1,
+          yAxisID: 'pressure'
+        },
+        {
+          label: 'Temperature',
+          data: temperatureData,
+          fill: false,
+          borderColor: 'rgb(255, 99, 132)',
+          tension: 0.1,
+          yAxisID: 'temperature'
+        }
+      ]
+    },
+    options: {
+      scales: {
+        x: {
+          type: 'time',
+          time: {
+            unit: 'minute',
+            stepSize: 60,
+          },
+          title: {
+            display: true,
+            text: 'Time'
           }
+        },
+        temperature: {
+          type: 'linear',
+          position: 'left', // Temperature on the left
+          beginAtZero: false,
+          title: {
+            display: true,
+            text: 'Temperature (°C)'
+          },
+          grid: {
+            drawOnChartArea: true // Temperature has grid lines
+          }
+        },
+        pressure: {
+          type: 'linear',
+          position: 'right', // Pressure on the right
+          beginAtZero: false,
+          title: {
+            display: true,
+            text: 'Pressure (hPa)'
+          },
+          grid: {
+            drawOnChartArea: false // Pressure does not have grid lines
+          }
+        }
       }
-  });
+    }
+  }
 }
