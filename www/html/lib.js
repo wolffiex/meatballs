@@ -40,13 +40,14 @@ export class ServerEventStream {
     eventSource.onmessage = event => {
       try {
         const data = JSON.parse(event.data)
-        if (data == "STOP") {
+        if (!data) {
           eventSource.close()
+          return
         }
         const [topic, eventData] = data
         if (this.queues.has(topic)) {
           const queue = this.queues.get(topic)
-          if (eventData == "STOP") {
+          if (!eventData) {
             queue.finish()
           } else {
             queue.push(eventData)

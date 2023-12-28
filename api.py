@@ -99,7 +99,7 @@ async def main():
     task_man = TaskMan()
     async with await psycopg.AsyncConnection.connect(**db_args) as aconn:
         await task_man.add_task("summary", get_summary(aconn))
-        # await task_man.add_task("barometer", gen_pressure_chart(aconn))
+        await task_man.add_task("barometer", gen_pressure_chart(aconn))
         async for item in task_man.yield_results():
             output(item)
 

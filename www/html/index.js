@@ -26,9 +26,19 @@ const ctx = document.getElementById('myChart');
 
 const eventStream = new ServerEventStream("/api")
 console.log(eventStream)
-const terters = eventStream.init("barometer", "fooof")
+const terters = eventStream.init("barometer", "summary")
 console.log(terters)
 drain(terters.barometer)
+summ(terters.summary)
+
+async function summ(records) {
+  console.log('did', records)
+  let data = {}
+  for await (const record of records) {
+    data = {...data, ...record}
+  }
+  console.log('summary', data)
+}
 
 async function drain(q) {
   console.log('drain', q)
