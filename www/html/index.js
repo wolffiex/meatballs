@@ -5,10 +5,10 @@ console.log('foo', summary)
 console.log('td', two_days)
 summary.then(ooo => console.log('summary', ooo))
 two_days.then(dd => {
+  const start = performance.now()
   const pressureData = dd.map(item => ({ x: item.time_bucket, y: item.pressure }))
   const temperatureData = dd.map(item => ({ x: item.time_bucket, y: item.outdoor_temp }))
-  console.log(pressureData[0])
-  console.log(temperatureData[0])
+  console.log('ook', performance.now() - start)
   new window.Chart(ctx, getTwoDayChart(pressureData, temperatureData))
 })
 
