@@ -4,17 +4,19 @@ dayjs.extend(dayjs_plugin_relativeTime)
 const { summary, two_days } = connect("summary", "two_days")
 document.addEventListener('alpine:init', () => {
   Alpine.store('summary', {})
-  processSummary().catch(console.error)
+  processSummary(Alpine.store('summary')).catch(console.error)
   processTwoDayData().catch(console.error)
 })
 
-async function processSummary() {
-  const summaryStore = Alpine.store('summary')
+const SUMMARIZE = {
+  'time': value => dayjs(new Date(value)).fromNow(),
+  'outdoor_temp': value => `${value}° F`,
+}
+async function processSummary(store) {
   for await (const data of summary) {
     for (const [key, value] of Object.entries(data)) {
-      const summarizedValue = summarize(key, value)
-      if (summarizedValue) {
-        summaryStore[key] = summarizedValue
+      if (key in SUMMARIZE) {
+        store[key] = SUMMARIZE[key](value)
       }
     }
   }
@@ -28,16 +30,6 @@ async function processTwoDayData() {
     temperatureData.push({ x: data.time_bucket, y: data.outdoor_temp })
   }
   new window.Chart(ctx, getTwoDayChart(pressureData, temperatureData))
-}
-
-function summarize(key, value) {
-  switch (key) {
-    case 'time':
-      return dayjs(new Date(value)).fromNow()
-    case 'outdoor_temp':
-      return `${value}° F`
-    //TODO
-  }
 }
 
 const ctx = document.getElementById('myChart');
