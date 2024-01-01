@@ -6,14 +6,11 @@ echo "Connection: keep-alive"
 echo "" # End of headers
 run () {
     local file=$1
-    local type=$2
     local eventname=$(basename "$file" .sql) 
     emit() {
         local data="$1"
         printf "event: %s\ndata: %s\n\n" "$eventname" "$data"
     }
-
-    emit $type
 
     {
         while IFS= read -r line; do
@@ -24,8 +21,8 @@ run () {
     }
 }
 
-run "sql/summary.sql"  "object" &
-run "sql/two_days.sql" "array"  &
+run "sql/summary.sql"  &
+run "sql/two_days.sql" &
 wait
 
 # Send a stream_stop event with no data
