@@ -7,8 +7,10 @@ import socketserver
 PORT = 8099
 DIRECTORY = "html"
 
+
 class ReusableAddressTCPServer(socketserver.TCPServer):
     allow_reuse_address = True
+
 
 class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -23,7 +25,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Connection", "keep-alive")
         self.end_headers()
 
-        with subprocess.Popen(['./api.sh'], stdout=PIPE, bufsize=1, text=True) as process:
+        with subprocess.Popen(
+            ["./api.sh"], stdout=PIPE, bufsize=1, text=True
+        ) as process:
             assert process.stdout
             for line in process.stdout:  # iterate over the output line by line
                 self.wfile.write(line.encode())  # assuming wfile expects bytes
@@ -32,7 +36,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if process.returncode != 0:
             exit(1)
 
-        self.wfile.flush() 
+        self.wfile.flush()
 
     def do_GET(self):
         if self.path == "/api":

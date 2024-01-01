@@ -9,12 +9,14 @@ from decimal import Decimal
 
 
 # Establish a connection to the database
-conn = psycopg2.connect(**{
-    "dbname": "monitoring",
-    "user": "adam",
-    "password": "adam",
-    "host": "localhost",
-})
+conn = psycopg2.connect(
+    **{
+        "dbname": "monitoring",
+        "user": "adam",
+        "password": "adam",
+        "host": "localhost",
+    }
+)
 cur = conn.cursor()
 
 
@@ -68,7 +70,7 @@ column_names = data.keys()
 column_values = data.values()
 weather_insert = sql.SQL("INSERT INTO weather ({}) VALUES ({})").format(
     sql.SQL(",").join(map(sql.Identifier, column_names)),
-    sql.SQL(",").join(sql.Placeholder() * len(column_values))
+    sql.SQL(",").join(sql.Placeholder() * len(column_values)),
 )
 
 try:
