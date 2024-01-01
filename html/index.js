@@ -3,8 +3,7 @@ import { connect } from './lib.js'
 dayjs.extend(dayjs_plugin_relativeTime)
 const { summary, two_days } = connect("summary", "two_days")
 document.addEventListener('alpine:init', () => {
-  Alpine.store('summary', {})
-  processSummary(Alpine.store('summary')).catch(console.error)
+  processSummary().catch(console.error)
   processTwoDayData().catch(console.error)
 })
 
@@ -12,7 +11,9 @@ const SUMMARIZE = {
   'time': value => dayjs(new Date(value)).fromNow(),
   'outdoor_temp': value => `${value}° F`,
 }
-async function processSummary(store) {
+async function processSummary() {
+  Alpine.store('summary', {})
+  const store = Alpine.store('summary')
   for await (const data of summary) {
     for (const [key, value] of Object.entries(data)) {
       if (key in SUMMARIZE) {
