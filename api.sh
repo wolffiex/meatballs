@@ -18,7 +18,7 @@ run () {
     {
         while IFS= read -r line; do
             emit "$line"
-        done < <(psql -h haus.local -d monitoring -t -A -q -f "${file}")
+        done < <(psql -h "$DB_HOST" -d monitoring -t -A -q -f "${file}")
 
         emit "null"
     }

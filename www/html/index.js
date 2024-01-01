@@ -1,14 +1,27 @@
 import { connect } from './lib.js';
 
+dayjs.extend(dayjs_plugin_relativeTime);
+document.addEventListener('alpine:init', () => {
+  const store = Alpine.store('summary', {});
+});
+
 const { summary, two_days } = connect("summary", "two_days")
 console.log('foo', summary)
 console.log('td', two_days)
-summary.then(ooo => console.log('summary', ooo))
+summary.then(ooo => {
+  console.log('summary', ooo)
+  const tore = Alpine.store('summary')
+  console.log('reo', tore)
+  const date = dayjs(new Date(ooo.time))
+  tore.time = date.fromNow()
+  tore.temp = `${ooo.outdoor_temp}° F`
+  // Alpine.store('summary', {...ooo, time: new Date(ooo.time)})
+
+  console.log('idid',  {...ooo, time: new Date(ooo.time)})
+})
 two_days.then(dd => {
-  const start = performance.now()
   const pressureData = dd.map(item => ({ x: item.time_bucket, y: item.pressure }))
   const temperatureData = dd.map(item => ({ x: item.time_bucket, y: item.outdoor_temp }))
-  console.log('ook', performance.now() - start)
   new window.Chart(ctx, getTwoDayChart(pressureData, temperatureData))
 })
 
