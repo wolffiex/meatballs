@@ -5,7 +5,7 @@ import http.server
 import socketserver
 
 PORT = 8099
-DIRECTORY = "www/html"
+DIRECTORY = "html"
 
 class ReusableAddressTCPServer(socketserver.TCPServer):
     allow_reuse_address = True
