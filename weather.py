@@ -1,3 +1,4 @@
+# Scrapes data from AmbientWeather to Postgres
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -12,7 +13,7 @@ conn = psycopg2.connect(**{
     "dbname": "monitoring",
     "user": "adam",
     "password": "adam",
-    "host": "haus.local",
+    "host": "localhost",
 })
 cur = conn.cursor()
 
