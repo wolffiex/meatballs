@@ -22,13 +22,14 @@ class AsyncQueue {
   push(value) {
     const nextResult = value == null ? { undefined, done: true } : { value, done: false }
     this.queue.push(nextResult)
-    if (this.pendingResolve) {
-      this.pendingResolve(this.queue.shift())
-    }
+    this._check()
   }
 
-  finish() {
-    this.queue.push({ value: undefined, done: true })
+  _check() {
+    if (this.pendingResolve && this.queue.length) {
+      this.pendingResolve(this.queue.shift())
+      this.pendingResolve = null
+    }
   }
 
   // Instance is async iterable
@@ -39,7 +40,11 @@ class AsyncQueue {
   // Async iterator protocol method
   async next() {
     return new Promise((resolve, reject) => {
+      if (this.pendingResolve != null) {
+        throw new Error("Failted to await items in order")
+      }
       this.pendingResolve = resolve;
+      this._check()
     });
   }
 }
