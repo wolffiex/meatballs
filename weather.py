@@ -13,8 +13,6 @@ conn = psycopg2.connect(
     **{
         "dbname": "monitoring",
         "user": "adam",
-        "password": "adam",
-        "host": "localhost",
     }
 )
 cur = conn.cursor()
