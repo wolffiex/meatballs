@@ -1,4 +1,14 @@
 #!/bin/bash
+# Function to handle termination signals
+cleanup() {
+    # Kill all background child processes of this script
+    pkill -P $$
+    exit 0
+}
+
+# Setup trap for SIGINT and SIGTERM
+trap cleanup SIGINT SIGTERM
+
 # Output the HTTP headers for SSE
 echo "Content-Type: text/event-stream"
 echo "Cache-Control: no-cache"
@@ -10,6 +20,8 @@ run () {
     emit() {
         local data="$1"
         printf "event: %s\ndata: %s\n\n" "$eventname" "$data"
+        echo "$1" >&2
+        sleep 1
     }
 
     {
@@ -20,7 +32,6 @@ run () {
         emit "null"
     }
 }
-
 run "sql/summary.sql"  &
 run "sql/two_days.sql" &
 wait
