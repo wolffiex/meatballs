@@ -27,8 +27,10 @@ class AsyncQueue {
 
   _check() {
     if (this.pendingResolve && this.queue.length) {
-      this.pendingResolve(this.queue.shift())
+      const pendingResolve = this.pendingResolve
       this.pendingResolve = null
+      this.pendingReject = null
+      pendingResolve(this.queue.shift())
     }
   }
 
@@ -41,9 +43,10 @@ class AsyncQueue {
   async next() {
     return new Promise((resolve, reject) => {
       if (this.pendingResolve != null) {
-        throw new Error("Failted to await items in order")
+        this.pendingReject("Failed to await items in order")
       }
       this.pendingResolve = resolve;
+      this.pendingRejext = reject
       this._check()
     });
   }
