@@ -19,22 +19,24 @@ export function connect(...eventNames) {
 
 class AsyncQueue {
   constructor() {
-    this.setPending()
+    this.queue = []
+    this.pendingResolve = null
   }
 
-  setPending() {
-    this.pending = new Promise(resolve => {
-      this.nextResolve = resolve
-    })
+  checkQ() {
+    if (this.pendingResolve && this.queue.length) {
+      this.pendingResolve(this.queue.shift())
+    }
   }
 
   push(value) {
-    this.nextResolve({ value, done: false })
-    this.setPending()
+    this.queue.push({ value, done: false })
+    this.checkQ()
   }
 
   finish() {
-    this.nextResolve({ value: undefined, done: true })
+    this.queue.push({ value: undefined, done: true })
+    this.checkQ()
   }
 
   // Instance is async iterable
@@ -44,6 +46,8 @@ class AsyncQueue {
 
   // Async iterator protocol method
   async next() {
-    return this.pending
+    return new Promise((resolve, reject) => {
+      this.pendingResolve = resolve;
+    });
   }
 }
