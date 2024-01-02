@@ -7,11 +7,7 @@ export function connect(...eventNames) {
     const iterable = new AsyncQueue()
     eventSource.addEventListener(name, (event) => {
       const data = JSON.parse(event.data)
-      if (data != null) {
-        iterable.push(data)
-      } else {
-        iterable.finish()
-      }
+      iterable.push(data)
     })
     return [name, iterable]
   }))
@@ -23,20 +19,16 @@ class AsyncQueue {
     this.pendingResolve = null
   }
 
-  checkQ() {
-    if (this.pendingResolve && this.queue.length) {
+  push(value) {
+    const nextResult = value == null ? { undefined, done: true } : { value, done: false }
+    this.queue.push(nextResult)
+    if (this.pendingResolve) {
       this.pendingResolve(this.queue.shift())
     }
   }
 
-  push(value) {
-    this.queue.push({ value, done: false })
-    this.checkQ()
-  }
-
   finish() {
     this.queue.push({ value: undefined, done: true })
-    this.checkQ()
   }
 
   // Instance is async iterable
