@@ -3,34 +3,38 @@ export function connect(...eventNames) {
   eventSource.addEventListener('stream_stop', () => {
     eventSource.close();
   });
-  return Object.fromEntries(eventNames.map(name => {
-    const iterable = new AsyncQueue()
-    eventSource.addEventListener(name, (event) => {
-      const data = JSON.parse(event.data)
-      iterable.push(data)
-    })
-    return [name, iterable]
-  }))
+  const iterableMap = Object.fromEntries(eventNames.map(name => [name, new AsyncQueue()]));
+  eventSource.addEventListener('message', (event) => {
+    const data = JSON.parse(event.data);
+    eventNames.forEach(name => {
+      if (data.eventType === name) {
+        iterableMap[name].push(data.payload);
+      }
+    });
+  });
+
+  return iterableMap
 }
 
 class AsyncQueue {
   constructor() {
     this.queue = []
-    this.pendingResolve = null
+    this.pending = null
   }
 
   push(value) {
-    const nextResult = value == null ? { undefined, done: true } : { value, done: false }
+    const nextResult = value == null
+      ? { value: undefined, done: true }
+      : { value, done: false }
     this.queue.push(nextResult)
     this._check()
   }
 
   _check() {
-    if (this.pendingResolve && this.queue.length) {
-      const pendingResolve = this.pendingResolve
-      this.pendingResolve = null
-      this.pendingReject = null
-      pendingResolve(this.queue.shift())
+    if (this.pending && this.queue.length) {
+      const { resolve } = this.pending
+      this.pending = null
+      resolve(this.queue.shift())
     }
   }
 
@@ -42,11 +46,12 @@ class AsyncQueue {
   // Async iterator protocol method
   async next() {
     return new Promise((resolve, reject) => {
-      if (this.pendingResolve != null) {
-        this.pendingReject("Failed to await items in order")
+      if (this.pending) {
+        const { reject: pendingReject } = this.pending
+        this.pending = null
+        pendingReject(new Error("Failed to await items in order"))
       }
-      this.pendingResolve = resolve;
-      this.pendingRejext = reject
+      this.pending = { resolve, reject }
       this._check()
     });
   }
